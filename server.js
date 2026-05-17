@@ -1,73 +1,56 @@
-// server.js
-// Entry point - starts the server 
-// The Global Kitchen API - RESTful API for digital cookbook
-
-// Import required packages
+// server.js - Entry point
 const express = require('express');
 const dotenv = require('dotenv');
-const connectDB = require('./src/config/database');
-const recipeRoutes = require('./src/routes/recipeRoutes');
-const errorHandler = require('./src/middleware/errorHandler');
 
-// Load environment variables from .env file 
+// Load environment variables FIRST
 dotenv.config();
 
-// Create Express application
+// Import modules AFTER dotenv config
+const connectDB = require('./src/config/database');
+const errorHandler = require('./src/middleware/errorHandler');
+
+// Create Express app
 const app = express();
 
-// ============ MIDDLEWARE ============
-// Body parser middleware - allows us to read JSON in request body
+// Middleware
 app.use(express.json());
 
-// Logging middleware - shows all incoming requests (for debugging)
+// Simple logging
 app.use((req, res, next) => {
-    console.log(` ${req.method} ${req.url}`);
+    console.log(`${req.method} ${req.url}`);
     next();
 });
 
-// ============ ROUTES ============
-// Mount recipe routes at /api/recipes
-// All recipe endpoints will start with /api/recipes
-app.use('/api/recipes', recipeRoutes);
-
-// Test route to confirm API is working
+// Health check route (BEFORE other routes)
 app.get('/api/health', (req, res) => {
     res.status(200).json({
         success: true,
-        message: 'The Global Kitchen API is running!',
-        endpoints: {
-            GET: '/api/recipes?category=optional',
-            POST: '/api/recipes',
-            PATCH: '/api/recipes/:id',
-            DELETE: '/api/recipes/:id'
-        }
+        message: 'The Global Kitchen API is running!'
     });
 });
 
-// ============ ERROR HANDLING ============
-// Handle 404 - Route not found (when user requests endpoint that doesn't exist)
-app.use((req, res, next) => {
+// Import routes AFTER app is created
+const recipeRoutes = require('./src/routes/recipeRoutes');
+app.use('/api/recipes', recipeRoutes);
+
+// 404 handler
+app.use((req, res) => {
     res.status(404).json({
         success: false,
-        error: {
-            message: `Route not found: ${req.method} ${req.url}`,
-            statusCode: 404
-        }
+        error: { message: `Route not found: ${req.method} ${req.url}` }
     });
 });
 
-// Global error handler (prevents server from crashing)
+// Global error handler
 app.use(errorHandler);
 
-// ============ START SERVER ============
+// Start server
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB then start server
-// This ensures database connects before accepting requests
 connectDB().then(() => {
     app.listen(PORT, () => {
-        console.log(` Server running on port ${PORT}`);
-        console.log(` API URL: http://localhost:${PORT}/api/recipes`);
-        console.log(` Health check: http://localhost:${PORT}/api/health`);
+        console.log(`🚀 Server running on port ${PORT}`);
+        console.log(`📚 API URL: http://localhost:${PORT}/api/recipes`);
+        console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
     });
 });

@@ -12,6 +12,7 @@ const recipeSchema = new mongoose.Schema(
             required: [true, 'Recipe title is required'],
             trim: true,  // Removes whitespace from both ends
             index: true  // INDEXING: defined on field expected for heavy lookup rates
+        },
         
         // Ingredients - array of strings (required)
         ingredients: {
